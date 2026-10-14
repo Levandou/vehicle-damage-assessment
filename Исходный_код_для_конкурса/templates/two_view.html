@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Car Damage 3D — Two-view (NEAR + FAR)</title>
+  <style>
+    :root {
+      --bg: #f2f5f8;
+      --card: #ffffff;
+      --text: #1c2430;
+      --accent: #0f766e;
+      --accent-2: #0b5e58;
+      --danger: #b91c1c;
+      --border: #d7dde4;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: radial-gradient(circle at 20% 20%, #dff4f2 0, var(--bg) 40%), var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 28px auto;
+      padding: 0 16px 28px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 8px 28px rgba(18, 38, 63, 0.08);
+      margin-bottom: 16px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0 0 12px;
+      font-weight: 700;
+    }
+
+    p {
+      margin: 8px 0;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .file-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 6px;
+    }
+
+    .file-pair .field {
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      background: #f9fbfd;
+    }
+
+    .file-pair label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .file-pair .hint {
+      font-size: 13px;
+      color: #4b5563;
+      margin: 6px 0 10px;
+    }
+
+    input[type="file"] {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      background: #ffffff;
+      width: 100%;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      padding: 10px 18px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background .15s ease;
+      margin-top: 12px;
+    }
+
+    button:hover {
+      background: var(--accent-2);
+    }
+
+    .error {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    .ok {
+      color: #0f5132;
+      font-weight: 600;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 14px;
+    }
+
+    .image-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fdfefe;
+    }
+
+    .image-item img {
+      width: 100%;
+      display: block;
+      border-radius: 8px;
+      border: 1px solid #e9edf2;
+    }
+
+    table.severity {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 6px;
+    }
+
+    table.severity th,
+    table.severity td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    table.severity th {
+      background: #eef3f6;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .badge-ok {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .badge-warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-bad {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .severity-thumb {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .severity-thumb img {
+      max-width: 220px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    pre {
+      margin: 0;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0f172a;
+      color: #dbeafe;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.35;
+      max-height: 480px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Автоматизация локализации повреждений</h1>
+      <form method="post" enctype="multipart/form-data">
+        <div class="file-pair">
+          <div class="field">
+            <label for="photo_near">Ближние кадры (можно несколько)</label>
+            <p class="hint">Крупный план повреждённой детали</p>
+            <input id="photo_near" type="file" name="photo_near" accept=".jpg,.jpeg,.png,.bmp,.webp" multiple required>
+          </div>
+          <div class="field">
+            <label for="photo_far">Дальние кадры (можно несколько)</label>
+            <p class="hint">Общий план машины</p>
+            <input id="photo_far" type="file" name="photo_far" accept=".jpg,.jpeg,.png,.bmp,.webp" multiple required>
+          </div>
+        </div>
+        <button type="submit">Запустить</button>
+      </form>
+
+      {% if error %}
+      <p class="error">{{ error }}</p>
+      {% endif %}
+    </div>
+
+    {% for nr in near_results %}
+    <div class="card">
+      <h2>NEAR #{{ loop.index }} — {{ nr.near_filename }}</h2>
+      {% if nr.overall_status %}
+      <p style="margin: 4px 0 8px;">
+        <strong>Статус заявки:</strong>
+        {% if nr.overall_status == 'OK' %}
+        <span class="badge badge-ok">OK</span>
+        {% elif nr.overall_status == 'EXPERT_REQUIRED' %}
+        <span class="badge badge-warn">EXPERT_REQUIRED</span>
+        {% else %}
+        <span class="badge badge-bad">{{ nr.overall_status }}</span>
+        {% endif %}
+      </p>
+      {% endif %}
+      {% if nr.selected_far_name %}
+      <p style="font-size: 14px; color: #4b5563; margin: 4px 0;">
+        <strong>Выбран FAR:</strong> {{ nr.selected_far_name }}
+        {% if nr.far_selection and nr.far_selection.reason %}
+        &middot; <em>{{ nr.far_selection.reason }}</em>
+        {% endif %}
+      </p>
+      {% endif %}
+      {% if nr.error %}
+      <p class="error">{{ nr.error }}</p>
+      {% endif %}
+      {% if nr.status_text %}
+      <p class="ok">{{ nr.status_text }}</p>
+      {% endif %}
+
+      {% if nr.primary_images %}
+      <h3 style="margin-top: 16px;">Картинки</h3>
+      <div class="grid">
+        {% for item in nr.primary_images %}
+        <div class="image-item">
+          <p><strong>{{ item.label }}</strong></p>
+          <img src="{{ item.url }}" alt="{{ item.label }}">
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if nr.severity_rows %}
+      <h3 style="margin-top: 16px;">Severity по деталям</h3>
+      <table class="severity">
+        <thead>
+          <tr>
+            <th>Деталь</th>
+            <th>Severity (3D)</th>
+            <th>Статус</th>
+            <th>Hits / overlap</th>
+            <th>Mesh source</th>
+            <th>Превью</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in nr.severity_rows %}
+          <tr>
+            <td><strong>{{ row.part }}</strong></td>
+            <td>
+              {% if row.severity_percent is not none %}
+              {{ "%.2f"|format(row.severity_percent) }}%
+              {% else %}
+              —
+              {% endif %}
+            </td>
+            <td>
+              {% if row.status == 'OK' %}
+              <span class="badge badge-ok">{{ row.status }}</span>
+              {% elif row.status == 'EXPERT_REQUIRED' %}
+              <span class="badge badge-warn">{{ row.status }}</span>
+              {% else %}
+              <span class="badge badge-bad">{{ row.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if row.hit_points is not none %}{{ row.hit_points }} hits{% endif %}
+              {% if row.overlap_px is not none %} / {{ row.overlap_px }}px{% endif %}
+            </td>
+            <td>{{ row.ray_mesh_source or '—' }}</td>
+            <td>
+              <div class="severity-thumb">
+                {% if row.severity_photo %}
+                <a href="{{ row.severity_photo }}" target="_blank"><img src="{{ row.severity_photo }}"
+                    alt="severity photo"></a>
+                {% endif %}
+                {% if row.severity_mesh %}
+                <a href="{{ row.severity_mesh }}" target="_blank"><img src="{{ row.severity_mesh }}"
+                    alt="severity mesh"></a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+
+    {% if claim_report_json %}
+    <div class="card">
+      <h2>Итоговый отчёт по страховому делу</h2>
+      <p style="color: #4b5563; font-size: 14px;">
+        Единый JSON-отчёт по всему страховому делу: метаданные авто
+        (vehicle), список фотографий (general/close), агрегированный
+        список повреждённых деталей (max severity по всем NEAR) и
+        вероятность скрытого повреждения (hidden_damage_confidence,
+        XGBoost на агрегированных severity).
+      </p>
+      <pre>{{ claim_report_json }}</pre>
+    </div>
+    {% endif %}
+
+    {% if quality_summary_json %}
+    <div class="card">
+      <h2>Оценка качества фотографий (диагностика)</h2>
+      <p style="color: #4b5563; font-size: 14px;">
+        FAR-качество считается только по сегменту машины (yolo11n-seg),
+        NEAR-качество — по объединению масок деталей. Метрики яркости,
+        контраста, blur, glare, шума и edge-density рассчитываются
+        исключительно по этим регионам, без учёта фона.
+      </p>
+      <pre>{{ quality_summary_json }}</pre>
+    </div>
+    {% endif %}
+  </div>
+</body>
+
+</html>

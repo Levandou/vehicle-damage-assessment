@@ -1,0 +1,24 @@
+ultralytics
+opencv-python
+pillow
+numpy
+matplotlib
+torch
+torchvision
+flask
+
+setuptools<81
+
+segmentation-models-pytorch
+
+timm
+
+detectron2 @ git+https://github.com/facebookresearch/detectron2.git
+
+kornia
+
+lightglue @ git+https://github.com/cvg/LightGlue.git
+
+xgboost
+joblib
+pandas
